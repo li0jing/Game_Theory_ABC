@@ -1,0 +1,228 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[BoldFont,SlantFont,CJKchecksingle]{xeCJK}
+\usepackage[top=1.25in,bottom=1.25in,left=1in,right=1in]{geometry}
+\usepackage{amsmath,amsthm,amssymb,latexsym,color}
+\usepackage[CJKbookmarks=true,
+            bookmarksnumbered=true,
+            bookmarksopen=true,
+            colorlinks =true, %注释掉此项则交叉引用为彩色边框
+            pdfborder=001,    %注释掉此项则交叉引用为彩色边框
+            citecolor =blue,%
+            linkcolor =blue,
+            ]{hyperref}
+\usepackage{layout}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{subfigure}
+
+\newcommand{\mv}[1]{\mbox{\boldmath$#1$}}         % 自定义矩阵向量 斜+黑
+\newcommand{\id}{\mathrm{d}}                      % 积分测度改为正体
+
+\setCJKmainfont[BoldFont=黑体]{宋体}
+\setCJKsansfont{STKaiti}% 设置缺省中文字体
+
+\parindent 2em   %段首缩进
+
+\begin{document}
+
+\title{个人选择理论}
+\author{李林静 \\ 
+   E-Mail: linjing.li@ia.ac.cn  \vspace{1cm} \\
+ 
+ 
+        中国科学院自动化研究所 (CASIA)\\
+        复杂系统管理与控制国家重点实验室 (SKLMCCS)\\
+        互联网大数据与安全信息学研究中心 (iBasic)  \vspace{1cm} \\ 
+ 
+ 
+        中国科学院大学人工智能学院 \vspace{5cm}
+}
+
+\date{Version: \today}
+
+
+
+\maketitle
+
+
+
+\newpage
+
+
+\section{基本设定}
+
+在微观经济学中，对个人的选择行为~(Choice
+behavior)~进行建模，通常是假定存在一个选择集合~(Choice set, the set
+of alternatives)：
+\begin{equation*}
+    X=\{x,y,z,\cdots\}
+\end{equation*}
+从手段上看，存在以下两种不同的方法：
+\begin{itemize}
+  \item 基于偏好~(preference-based)，假设个人对选择集~$X$~中的各选项存在偏好序关系。
+  \item 基于选择~(choice-based)，即直接对观测到的选择行为进行建模。
+\end{itemize}
+
+\section{偏好，Preference}
+
+基于偏好的方法，通常假设个人存在理性的~(Rational)~偏好关系，同时可以用效用函数~(Utility function)~来表示
+这个理性的偏好关系~(通常还需对选择集~$X$~作进一步的假设，在选择集~$X$~有限的情况下，
+理性的偏好关系总可以由一个效用函数来表示)。
+
+\subsection{偏好关系}
+
+偏好关系~(Preference relation)，$\succeq$，定义了选择集~$X$~上的一种比较关系。
+$\forall x,y\in X$，$x\succeq y$~表示选项~$x$~至少跟选项~$y$~一样好。两种派生关系：
+\begin{itemize}
+  \item 严格偏好关系~(Strict preference relation)，$\succ$，$\forall x,y\in X$，
+        $x\succ y \Leftrightarrow x\succeq y$，$y\nsucceq x$。
+  \item 无差异关系~(Indifference)，$\sim$，$\forall x,y\in X$，
+        $x\sim y \Leftrightarrow x\succeq y$，$y\succeq x$。
+\end{itemize}
+\textbf{称选择集~$X$~上的偏好关系~$\succeq$~为理性的，若其同时满足完全性和传递性}：
+\begin{itemize}
+  \item 完全性~(Completeness)，$\forall x,y\in X$，$x\succeq y$~和~$y\succeq x$~至少一个成立。
+  \item 传递性~(Transitivity)，$\forall x,y,z\in X$，若~$x\succeq y$~且~$y\succeq z$，则~$x\succeq z$。
+\end{itemize}
+完全性和传递性都是对偏好关系施加的很强约束，现实中，个人的行为极有可能违背这两条假设。
+相关讨论可以参考行为经济学相关文献。
+
+\subsection{效用函数}
+
+现代意义上的效用函数，一般是指序数效用~(Ordinal)，即只有效用函数值的大小关系有意义。更一般的说，
+序数特性是指在严格单调增变换~(Strictly increasing transformation)~中保持不变的性质。
+在传统意义上的，基数效用~(Cardinal)~还跟具体的效用值相关。
+
+称函数~$u: X\rightarrow\mathbb{R}$~为表示~$X$~上偏好关系~$\succeq$~的效用函数，若~$\forall x,y\in X$
+\begin{equation*}
+    x\succeq y~~~\Leftrightarrow~~~u(x)\geq u(y)
+\end{equation*}
+通常，表示同一个偏好关系的效用函数并不唯一。因为序数特性在增变换下保持不变，
+故若~$u$~是一个效用函数，函数~$f: \mathbb{R}\rightarrow \mathbb{R}$~为严格单调增函数，
+则~$f\circ u$~为效用函数，且跟效用函数~$u$~表示同一个偏好关系。
+
+\textbf{偏好关系能够被效用函数表示的必要条件是其为理性偏好。}
+在选择集有限的情况下，容易证明这就是充分必要条件~(构造一个效用函数)。
+
+直观解释：假设~$u(\cdot)$~表示~$X$~上的偏好~$\succeq$。
+首先，因为~$u(\cdot)$~在~$X$~上定义，故~$\forall x,y\in X$，$u(x)$~和~$u(y)$~有定义，
+且为实数值。注意到，在实数集~$\mathbb{R}$~上，$u(x)\geq u(y)$~和~$u(y)\geq u(x)$~必有一个成立，
+故有~$x\succeq y$~或~$y\succeq x$，即完全性成立。其次，$\forall x,y,z\in X$，
+若~$x\succeq y$~且~$y\succeq z$，因为~$u(\cdot)$~表示~$\succeq$，故有~$u(x)\geq u(y)$~且~$u(y)\geq u(z)$。
+而在实数集上，显然有~$u(x)\geq u(z)$，亦即~$x\succeq z$，故传递性成立。
+
+
+\section{选择，Choice }
+
+基于选择的方法最先由~Samuelson~提出，通过在选择集上定义选择结构~(Choice structure)~来描述观测
+到的个体选择行为。利用这一结构，可以定义显示偏好关系~(revealed preference relation)。通常，
+基于选择的方法要求的知识要少于基于偏好的方法，其只需要个人已观测到的选择行为。
+
+\subsection{选择结构与显示偏好}
+
+选择集~$X$~上的选择结构~$(\mathcal{B},C(\cdot))$：
+\begin{itemize}
+  \item 预算集族~$\mathcal{B}$，由~$X$~的子集构成，$\forall B\in
+        \mathcal{B}$~称为预算集~(budget set)，$\mathcal{B}$~不一定包含~$X$~的全部子集。
+  \item 选择规则~(对应，correpondence)~$C(\cdot)$，Choice rule，$\forall B\in
+        \mathcal{B}$，$C(B)\subset B$。即个体面临预算集~$B$~时，
+        $C(B)$~表示其可能做出的选择。
+\end{itemize}
+
+给定选择集~$X$~上的选择结构~$(\mathcal{B},C(\cdot))$，
+则可以诱导如下的显示偏好关系~(Revealed preference relation)~$\succeq^\star$：
+\begin{equation*}
+    x\succeq^\star y~~~\Leftrightarrow~~~\exists B\in\mathcal{B}, x,y\in B, x\in C(B)
+\end{equation*}
+即~$x$~显示出至少跟~$y$~一样好。称~$x$~显示出偏好于~$y$，
+若~$\exists B\in\mathcal{B}, x,y\in B, x\in C(B)$，但~$y\notin C(B)$。
+
+
+\subsection{显示偏好弱公理}
+
+\textbf{称选择结构~$(\mathcal{B},C(\cdot))$~满足显示偏好弱公理~
+(Weak axiom of revealed preference)~，若其具有如下特性}：
+\begin{itemize}
+  \item 对某(些)~$B\in\mathcal{B}$，若~$x,y\in B$~有~$x\in C(B)$；
+  \item 则对~$\forall B^\prime\in\mathcal{B}$，且~$x,y\in B^\prime$，
+        若~$y\in C(B^\prime)$，必有~$x\in C(B^\prime)$。
+\end{itemize}
+即当~$y$~存在时，$x$~被选择，则满足弱公理的选择结构不能存在包含~$x,y$~的预算集，
+选择规则在其上包含~$y$~而不包含~$x$。利用显示偏好关系，
+弱公理可以表述为：若~$x\succeq^\star y$~($x$~显示出至少跟~$y$~一样的好)，
+则~$y$~不能显示出偏好于~$x$。
+
+弱公理也等价于以下表述，对~$B,B^\prime\in\mathcal{B}$，
+$x,y\in B$，$x,y\in B^\prime$，若~$x\in C(B)$，$y\in C(B^\prime)$，
+则必有~$\{x,y\}\subset C(B)$~和~$\{x,y\}\subset C(B^\prime)$。
+进一步可得，$\forall B,B^\prime\in\mathcal{B}$，若~$C(B)\cap B^\prime\neq\emptyset$，
+且~$C(B^\prime)\cap B\neq\emptyset$，则有~$C(B)\cap B^\prime\subset C(B^\prime)$~和~
+$C(B^\prime)\cap B\subset C(B)$。若选择规则为单值，则有~$C(B^\prime)=C(B)$，
+而且条件~$C(B)\cap B^\prime\neq\emptyset$，等价于~$C(B)\in B^\prime$。
+~$C(B^\prime)\cap B\neq\emptyset$，等价于~$C(B^\prime)\in B$。
+
+
+\section{偏好与选择间的关系}
+
+对于上述两种方法，一个疑问是他们是否等价？通常而言，二者是不等价的，
+基于选择的方法所要求的知识要少于基于偏好的方法。若选择结构的预算集族包含
+选择集的全体子集，则二者等价。
+
+首先考虑由偏好关系生成的~(generate)~选择结构。
+设在选择集~$X$~上有定义好的偏好关系~$\succeq$~和预算集族~$\mathcal{B}$，
+则可以由~$\succeq$~生成~$X$~上的一个选择结构，
+记为~$(\mathcal{B},C^\star(\cdot,\succeq))$，其选择规则定义为：
+\begin{equation*}
+    \forall B\in\mathcal{B},~C^\star(B,\succeq)=\{x\in B \ | \ x\succeq y,~\forall y\in B\}
+\end{equation*}
+
+\textbf{选择集~$X$~上的偏好关系~$\succeq$~是理性的，
+则其生成的选择结构~$(\mathcal{B},C^\star(\cdot,\succeq))$~满足弱公理}。
+
+直观解释：若~$\exists B\in\mathcal{B}, x,y\in B, x\in C^\star(B,\succeq)$，
+则按照生成规则的定义有~$x\succeq y$。现假设~$\exists B^\prime\in\mathcal{B},
+x,y\in B^\prime, y\in C^\star(B^\prime,\succeq)$，为说明生成的选择结构满足弱公理，
+还需要证明~$x\in C^\star(B^\prime,\succeq)$。
+注意到，按生成规则可得~$\forall z\in B^\prime, y\succeq z$，前面已经得到~$x\succeq y$，
+故由传递性~(理性偏好)~可得~$\forall z\in B^\prime, x\succeq z$，即~$x\in C^\star(B^\prime,\succeq)$。
+
+另一方面，考虑选择结构的理性化。
+给定选择集~$X$~上的选择结构~$(\mathcal{B},C(\cdot))$~和理性偏好~$\succeq$，
+称~$\succeq$~是选择规则~$C(\cdot)$~相对于预算集族~$\mathcal{B}$~的理性化
+~($\succeq$~在预算集族~$\mathcal{B}$~上理性化选择规则~$C(\cdot)$)，
+若~$\succeq$~生成选择结构~$(\mathcal{B},C(\cdot))$，即
+\begin{equation*}
+    \forall B\in\mathcal{B},~C(B)=C^\star(B,\succeq)
+\end{equation*}
+因为理性偏好生成的选择结构满足弱公理，故一个选择结构可理性化的必要条件就是其必须满足弱公理。
+但这并不充分，选择结构能否理性化还依赖于其预算集族。
+
+\textbf{若选择集~$X$~上的选择结构~$(\mathcal{B},C(\cdot))$~满足弱公理，
+且~$\mathcal{B}$~包含~$X$~的所有不超过三个元素的子集，
+则其可被唯一的理性偏好关系理性化，且这一偏好关系就是选择结构诱导的显示偏好关系~$\succeq^\star$}。
+
+直观解释：首先说明唯一性，因为~$\mathcal{B}$~包含所有的二元子集，
+故理性化偏好若存在的话必定唯一，否则将会跟~$C(\cdot)$~在二元子集上的行为矛盾。
+
+其次，说明显示偏好~$\succeq$~生成选择结构~$(\mathcal{B},C(\cdot))$，利用证明集合相等的方法。
+$\forall B\in\mathcal{B}$，若~$x\in C(B)$，则~$\forall y\in B$，根据显示偏好关系的定义，
+可得~$x\succeq^\star y$。根据生成规则，可得~$x\in C^\star(B,\succeq^\star)$，
+从而有~$C(B)\subset C^\star(B,\succeq^\star)$。若有~$x\in C^\star(B,\succeq^\star)$，
+则根据生成规则，可得~$\forall y\in B, x\succeq^\star y$，从而~$x\in C(B)$，
+即~$C^\star(B,\succeq^\star)\subset C(B)$。
+
+最后，说明显示偏好关系~$\succeq$~是理性的。因为~$\mathcal{B}$~包含所有的二元子集，
+故~$\forall \{x,y\}\in\mathcal{B}$，要么~$x\in C(\{x,y\})$，要么~$y\in C(\{x,y\})$，
+或者~$x,y\in C(\{x,y\})$。所以，要么~$x\succeq^\star y$，要么~$y\succeq^\star x$，
+或者~$x\sim y$，即显示偏好关系满足完全性，以下说明其满足传递性。
+假设有~$x\succeq^\star y$，$y\succeq^\star z$，需要证明~$x\succeq^\star z$。
+注意到预算集族包含所有三元子集，故~$\{x,y,z\}\in\mathcal{B}$。
+若~$x\in C(\{x,y,z\})$，则有~$x\succeq^\star z$。若~$y\in C(\{x,y,z\})$，
+因为~$x\succeq^\star y$，弱公理保证~$x\in C(\{x,y,z\})$，从而~$x\succeq^\star z$。
+若~$z\in C(\{x,y,z\})$，
+因为~$y\succeq^\star z$，弱公理保证~$y\in C(\{x,y,z\})$，
+从而由上面的推理同样可得~$x\succeq^\star z$。
+
+
+\end{document}

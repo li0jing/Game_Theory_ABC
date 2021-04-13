@@ -1,0 +1,878 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[BoldFont,SlantFont,CJKchecksingle]{xeCJK}
+\usepackage[top=1.25in,bottom=1.25in,left=1in,right=1in]{geometry}
+\usepackage{amsmath,amsthm,amssymb,latexsym,color}
+\usepackage[CJKbookmarks=true,
+            bookmarksnumbered=true,
+            bookmarksopen=true,
+            colorlinks =true, %注释掉此项则交叉引用为彩色边框
+            pdfborder=001,    %注释掉此项则交叉引用为彩色边框
+            citecolor =blue,%
+            linkcolor =blue,
+            ]{hyperref}
+\usepackage{layout}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{subfigure}
+
+\newcommand{\mv}[1]{\mbox{\boldmath$#1$}}         % 自定义矩阵向量 斜+黑
+\newcommand{\id}{\mathrm{d}}                      % 积分测度改为正体
+
+\setCJKmainfont[BoldFont=黑体]{宋体}
+\setCJKsansfont{STKaiti}% 设置缺省中文字体
+
+\parindent 2em   %段首缩进
+
+\begin{document}
+
+\title{单物品拍卖机制设计}
+\author{李林静 \\ 
+   E-Mail: linjing.li@ia.ac.cn  \vspace{1cm} \\
+ 
+ 
+        中国科学院自动化研究所 (CASIA)\\
+        复杂系统管理与控制国家重点实验室 (SKLMCCS)\\
+        互联网大数据与安全信息学研究中心 (iBasic)  \vspace{1cm} \\ 
+ 
+ 
+        中国科学院大学人工智能学院 \vspace{5cm}
+}
+
+\date{Version: \today}
+
+
+
+\maketitle
+
+
+
+\newpage
+
+
+
+ \section{机制设计}
+
+ \subsection{背景}
+
+设某卖者~(Seller)~决定以拍卖的方式出售一不可分物品~(indivisible
+good)，且该物品对卖者的保留价值~(Reserve
+value)~$t_0$~为共同知识~(Common Knowledge)。
+设有~$N$~个投标人参与竞价，其全体构成集合
+\begin{equation*}
+    \mathcal{N}=\{1,2,\cdots,N\}
+\end{equation*}
+
+以下设投标人~$i$~对标的物的估价~(Value)~为私有信息~(Private
+Information)，亦即其类型~(Type)。
+在分析过程中令随机变量~$T_i$~表示投标人~$i$~的估价，且只有投标人~$i$~
+知道自己估价的真实取值~$t_i$。 设随机变量~$T_i$~的取值范围为
+\begin{equation*}
+    \mathcal{T}_i=\left[\underline{\theta}_i,\overline{\theta}_i\right]
+\end{equation*}
+其中，$\underline{\theta}_i$~和~$\overline{\theta}_i$~分别是可能的估价下界和上界，
+并记估价~$T_i$~的概率分布函数和概率密度函数分别为~$F_i(t_i)$~和~$f_i(t_i)$。
+
+为方便分析，以下将各投标人的类型合并为下述类型~(估价)~向量~(随机向量)
+\begin{equation*}
+    \mv{T}=(T_1,T_2,\cdots,T_N)
+\end{equation*}
+其取值空间和一次具体实现值则分别记为
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  \mv{\mathcal{T}} &=& \mathcal{T}_1\times\mathcal{T}_2\times\cdots\times\mathcal{T}_N \\
+  \mv{t} &=& (t_1,t_2,\cdots,t_N)
+\end{eqnarray*}
+按照不完全信息静态博弈的分析框架，
+以下假设联合概率分布~$F(\mv{t})$~为共同知识，且记其概率密度函数为~$f(\mv{t})$。
+同时，根据博弈分析的习惯，定义下述符号
+ \begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  \mv{t}_{-i} &\triangleq& (t_1,t_2,\cdots,t_{i-1},t_{i+1},\cdots,t_N) \\
+  \mv{T}_{-i} &\triangleq& (T_1,T_2,\cdots,T_{i-1},T_{i+1},\cdots,T_N)~ \\
+  \mv{\mathcal{T}}_{-i} &\triangleq& \mathcal{T}_1\times\mathcal{T}_2\times\cdots\mathcal{T}_{i-1}
+                            \times\mathcal{T}_{i+1}\times\cdots\times\mathcal{T}_N \\
+  f_{-i}(\mv{t}_{-i}) &\triangleq& f(t_1,t_2,\cdots,t_{i-1},t_{i+1},\cdots,t_N)
+\end{eqnarray*}
+根据上述定义，可知符号~$\mv{t}_{-i}$，$\mv{T}_{-i}$，
+$\mv{\mathcal{T}}_{-i}$~和~$f_{-i}(\mv{t}_{-i})$~分别表示
+投标人~$i$~所面对的投标人的类型值，类型随机向量，类型取值空间和类型的概率密度函数。
+且有~$(t_i,\mv{t}_{-i})=\mv{t}$，$(T_i,\mv{T}_{-i})=\mv{T}$，
+以及~$(\mathcal{T}_i,\mv{\mathcal{T}}_{-i})=\mv{\mathcal{T}}$。
+
+
+ \subsection{机制}
+
+为获得标的物，投标人需要提交自己的报价，
+在一般的机制~(Mechanism)~中则称其为消息~(Message)。
+令~$\mathcal{W}_i$~表示投标人~$i$~的消息空间，其一个具体的消息则记为~$w_i$。
+同时，记机制的消息空间及一个具体的消息向量实现为
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  \mv{\mathcal{W}} &=& \mathcal{W}_1\times\mathcal{W}_2
+                       \times\cdots\times\mathcal{W}_N \\
+  \mv{w} &=& (w_1,w_2,\cdots,w_N)
+\end{eqnarray*}
+
+当消息向量~$\mv{w}$~提交后，需要据其确定标的物的分配方案和价格。
+对投标人~$i$，记其获得标的物的概率为~$\delta_i$，
+则一个分配方案可以表示为
+\begin{equation*}
+    \Delta = (\delta_1,\delta_2,\cdots,\delta_N),
+              ~~~~\forall i\in\mathcal{N},~0 \le \delta_i \le 1,
+              ~\delta_1 + \delta_2 + \cdots + \delta_N \le 1
+\end{equation*}
+全体可能的分配方式则构成集合，
+\begin{equation*}
+    \mv{\Delta} = \left\{\Delta\ \left| \ \Delta = (\delta_1,\delta_2,\cdots,\delta_N),
+                  ~~~~\forall i\in\mathcal{N},~0 \le \delta_i \le 1,
+                  ~\delta_1 + \delta_2 + \cdots + \delta_N \le 1 \right.\right\}
+\end{equation*}
+即集合~$\mathcal{N}$~上的全体概率分布。注意到，当各分配概率之和小于~$1$~时，
+存在卖者不出售``标的物''的可能性。为实现前述的根据消息向量来确定标的物的分配，需要预先指定一个
+从消息空间~$\mv{\mathcal{W}}$~到集合~$\mv{\Delta}$~的映射
+\begin{equation}\label{mech:map:allocation}
+    \mv{\pi}:\mv{\mathcal{W}}\rightarrow\mv{\Delta}
+\end{equation}
+并称其为分配规则~(Allocation Rule)。
+对任意消息向量~$\mv{w}\in\mv{\mathcal{W}}$，
+$\pi_i(\mv{w})$~表示投标人~$i$~获得标的物的概率。
+
+同样，为实现前述的根据消息向量来确定价格，
+需要预先指定一个从消息空间~$\mv{\mathcal{W}}$~到价格空间~$\mathbb{R}^N$~的映射
+\begin{equation}\label{mech:map:payment}
+    \mv{\mu}:\mv{\mathcal{W}}\rightarrow\mathbb{R}^N
+\end{equation}
+并称其为定价规则~(Payment Rule)，
+对任意消息向量~$\mv{w}\in\mv{\mathcal{W}}$，
+$\mu_i(\mv{w})$~表示投标人~$i$~所要支付的期望价格。
+
+利用上述符号，(拍卖)机制~$\mathcal{M}$~可描述为如下三元组
+\begin{equation}\label{mech:definition:mechanism}
+    \mathcal{M} = \left(\mv{\mathcal{W}},\mv{\pi},\mv{\mu}\right)
+\end{equation}
+同时机制~$\mathcal{M}$~也定义了一个投标人之间的不完全信息静态博弈。
+在该博弈中，投标人~$i$~的纯策略是从其类型空间~$\mathcal{T}_i$~到其
+消息空间~$\mathcal{W}_i$~的映射
+\begin{equation}\label{mech:map:pure_strategy}
+    \beta_i:\mathcal{T}_i\rightarrow\mathcal{W}_i
+\end{equation}
+而策略组合则可表示为下述函数向量
+\begin{equation*}
+    \mv{\beta}=(\beta_1,\beta_2,\cdots,\beta_N)=(\beta_i,\mv{\beta}_{-i})
+\end{equation*}
+其中，$\mv{\beta}_{-i}$~为投标人~$i$~所面临的对手策略
+\begin{equation*}
+    \mv{\beta}_{-i} \triangleq (\beta_1,\beta_2,\cdots,
+                                  \beta_{i-1},\beta_{i+1},\cdots,\beta_N)
+\end{equation*}
+按照定义，策略组合~$\mv{\beta}$~构成为博弈
+(或机制)~$\mathcal{M}$~的~Bayesian Nash~均衡~(Bayesian Nash
+Equilibrium，BNE)，若~$\forall i\in\mathcal{N}$，
+如果除~$i$~之外的投标人使用策略~$\mv{\beta}_{-i}$，
+则采用~$\beta_i$~是投标人~$i$~的最优策略。
+
+ \subsection{直接机制与显示原理}\label{sec:survey:direct:mechanism}
+
+在设计机制的时候，可选择的消息类型可以无限多，这为求解制造了障碍，
+特别是在求解最优机制的时候。若一机制的消息空间跟投标人的类型空间完全相同，
+即~$\forall
+i\in\mathcal{N},~\mathcal{W}_i=\mathcal{T}_i$，则称其为直接机制~(Direct
+Mechanism)，并可用如下二元组表示
+ \begin{equation}\label{mech:definition:direct:mechanism}
+    \mathcal{D} = (\mv{\pi},\mv{\mu})
+\end{equation}
+此时，分配规则~$\mv{\pi}$~和定价规则~$\mv{\mu}$~定义在类型空间~$\mv{\mathcal{T}}$~上
+\begin{eqnarray}
+% \nonumber to remove numbering (before each equation)
+  \mv{\pi}&:&\mv{\mathcal{T}}\rightarrow\mv{\Delta} \\
+  \mv{\mu}&:&\mv{\mathcal{T}}\rightarrow\mathbb{R}^N
+\end{eqnarray}
+
+对一个直接机制~$\mathcal{D}$，如果说实话构成一个~BNE~($\forall
+i,~\forall
+t_i\in\mathcal{T}_i,~\beta_i(t_i)=t_i$)~，则称该直接机制是说实话的~(Truthful)。\vspace{5pt}
+
+\textbf{显示原理~(Revelation Principle)~~~~
+对任意机制~$\mathcal{M}$，若其存在均衡~$\mv{\beta}$，
+则在该均衡上的配置结果~(分配和价格)，可以通过一说实话的直接机制来实现。}\vspace{5pt}
+
+对任意机制~$\mathcal{M}=(\mv{\mathcal{W}},\mv{\pi},\mv{\mu})$~及其均衡~$\mv{\beta}$，
+能实现上述功能的直接机制~$\mathcal{D}^\mathcal{M}=(\mv{\pi}^\mathcal{M},\mv{\mu}^\mathcal{M})$~可取
+为~(\mv{\pi},\mv{\mu})~和~$\mv{\beta}$~的复合
+ \begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  \mv{\pi}^\mathcal{M} &=& \mv{\pi}(\mv{\beta})=\mv{\pi}\circ\mv{\beta} \\
+  \mv{\mu}^\mathcal{M} &=& \mv{\mu}(\mv{\beta})=\mv{\mu}\circ\mv{\beta}
+\end{eqnarray*}
+注意到，当投标人说实话时，将类型(估价)~$\mv{t}$~带入直接机制~$\mathcal{D}^\mathcal{M}$，
+的确可得到跟原机制~$\mathcal{M}=(\mv{\mathcal{W}},\mv{\pi},\mv{\mu})$~在
+均衡~$\mv{\beta}$~上相同的配置。
+故只需要证明说实话是机制~$\mathcal{D}^\mathcal{M}$~的均衡。
+为此，假设除~$i$~之外的投标人均说实话，
+而投标人~$i$~的报价~$s_i \neq t_i$，其期望收益为
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  \pi^\mathcal{M}_i(s_i,\mv{t}_{-i})t_i - \mu_i^\mathcal{M}(s_i,\mv{t}_{-i}) &=&
+   \pi_i(\mv{\beta}(s_i,\mv{t}_{-i}))t_i - \mu_i(\mv{\beta}(s_i,\mv{t}_{-i}))\\
+   &=& \pi_i(\beta(s_i),\mv{\beta}_{-i}(\mv{t}_{-i}))t_i - \mu_i(\beta(s_i),\mv{\beta}_{-i}(\mv{t}_{-i}))\\
+   &\leq& \pi_i(\beta(t_i),\mv{\beta}_{-i}(\mv{t}_{-i}))t_i - \mu_i(\beta(t_i),\mv{\beta}_{-i}(\mv{t}_{-i}))\\
+   &=& \pi_i(\mv{\beta}(\mv{t}))t_i - \mu_i(\mv{\beta}(\mv{t}))\\
+   &=& \pi^\mathcal{M}_i(\mv{t})t_i - \mu_i^\mathcal{M}(\mv{t})
+\end{eqnarray*}
+因为~$\mv{\beta}$~是均衡，故不等号成立。由上述各式可知当对手使用说实话策略时，
+任意投标人~$i$~的最佳策略也是说实话，故说实话是直接机制~$\mathcal{D}^\mathcal{M}$~的均衡。
+
+根据显示原理，在设计机制的时候，
+可以直接将投标人的消息空间~$\mv{\mathcal{W}}$~取为对应的类型空间~$\mv{\mathcal{T}}$，
+从而降低设计的复杂度。
+
+
+ \subsection{激励兼容与收益等价}\label{sec:survey:incentive:IC}
+
+对直接机制~$\mathcal{D}=(\mv{\pi},\mv{\mu})$，若投标人~$i$~报价~$s_i$，
+而其对手均采用说实话策略，则投标人~$i$~能获得``标的物''的期望概率和
+需要支付的期望价格分别为
+ \begin{eqnarray}
+\label{mech:definition:expected:prob}
+\delta_i(s_i) &=& \mathbb{E}[\pi_i(s_i, \mv{T}_{-i})] = \int_{\mv{\mathcal{T}}_{-i}}
+    \pi_i(s_i,\mv{t}_{-i})f_{-i}(\mv{t}_{-i})~\id\mv{t}_{-i}\\
+\label{mech:definition:expected:payment}
+  m_i(s_i) &=& \mathbb{E}[\mu_i(s_i, \mv{T}_{-i})] = \int_{\mv{\mathcal{T}}_{-i}}
+    \mu_i(s_i,\mv{t}_{-i})f_{-i}(\mv{t}_{-i})~\id\mv{t}_{-i}
+\end{eqnarray}
+注意上述概率和价格只跟投标人~$i$~的报价相关联，而与其真实估价无关。
+当投标人~$i$~的真实估价为~$t_i$~时，其能获得的期望收益为
+\begin{eqnarray}
+    \nonumber
+    u_i(t_i,s_i) &=& \mathbb{E}[\pi_i(s_i, \mv{T}_{-i})t_i - \mu_i(s_i, \mv{T}_{-i})] 
+                  =  \mathbb{E}[\pi_i(s_i, \mv{T}_{-i})]t_i - \mathbb{E}[\mu_i(s_i, \mv{T}_{-i})] \\
+                 &=& \delta_i(s_i)t_i - m_i(s_i)
+		 \label{mech:definition:expected:payoff}
+\end{eqnarray}
+
+称直接机制~$\mathcal{D}$~为激励兼容的~(Incentive
+Compatible，IC)，
+若~$\forall i\in\mathcal{N}, ~\forall t_i\neq s_i\in\mathcal{T}_i$，
+下述关于期望收益的不等式成立
+\begin{equation}\label{mech:definition:ic:inequality}
+    U_i(t_i) \triangleq u_i(t_i,t_i) = \delta_i(t_i)t_i - m_i(t_i)
+                \ge \delta_i(s_i)t_i - m_i(s_i) = u_i(t_i,s_i)
+\end{equation}
+
+由上述定义可知，若机制~$\mathcal{D}$~为激励兼容的，
+则所有投标人使用说实话策略将构成机制的一个均衡~(BNE)。
+故激励兼容也可如下定义
+\begin{equation}\label{mech:definition:ic:max}
+    U_i(t_i) \triangleq \max_{s_i\in\,\mathcal{T}_i}
+                 ~\left\{\delta_i(s_i)t_i - m_i(s_i)\right\},
+                 ~~~~\forall i\in\,\mathcal{N},~\forall t_i\in\mathcal{T}_i
+\end{equation}
+
+注意到在上述定义中，二元函数~$u_i(x,y)$~的第一变元~$x$~表示投标人~$i$~的类型，
+第二变元~$y$~为其报价，$u_i(x,y)$~等于投标人~$i$~能获得的期望收益。
+函数~$U_i(\cdot)$~则等于投标人~$i$~说实话时能获得的期望收益，
+也称为均衡收益函数~(Equilibrium Payoff Function，因为说实话构成~BNE)。
+以下分析激励兼容的直接机制所具有的特性。\vspace{5pt}
+
+\textbf{(1)~~对激励兼容的直接机制~$\mathcal{D}$，$\forall i\in\,\mathcal{N}$，
+均衡收益函数~$U_i(\cdot)$~为凸函数。}\vspace{5pt}
+
+因为对~$\forall t_i^1\neq t_i^2\in\,\mathcal{T}_i$，
+$\forall \lambda_1,\lambda_2\ge 0, \lambda_1+\lambda_2=1$，成立
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  U_i\left(\lambda_1t_i^1 + \lambda_2t_i^2\right) &=& \max_{s_i\in\,\mathcal{T}_i}
+     ~\left\{\delta_i(s_i)\left(\lambda_1t_i^1 + \lambda_2t_i^2\right) - m_i(s_i)\right\}\\
+   &=& \max_{s_i\in\,\mathcal{T}_i}
+     ~\left\{\lambda_1\delta_i(s_i)t_i^1 + \lambda_2\delta_i(s_i)t_i^2
+     - (\lambda_1 + \lambda_2)m_i(s_i)\right\} \\
+   &=& \max_{s_i\in\,\mathcal{T}_i}
+     ~\left\{\lambda_1\left(\delta_i(s_i)t_i^1 - m_i(s_i)\right)
+     + \lambda_2\left(\delta_i(s_i)t_i^2 - m_i(s_i)\right)\right\} \\
+   &\leq& \max_{s_i\in\,\mathcal{T}_i}
+     ~\left\{\lambda_1\left(\delta_i(s_i)t_i^1 - m_i(s_i)\right)\right\}
+     + \max_{s_i\in\,\mathcal{T}_i}
+     ~\left\{\lambda_2\left(\delta_i(s_i)t_i^2 - m_i(s_i)\right)\right\} \\
+   &=& \lambda_1\max_{s_i\in\,\mathcal{T}_i}
+     ~\left\{\delta_i(s_i)t_i^1 - m_i(s_i)\right\}
+     + \lambda_2\max_{s_i\in\,\mathcal{T}_i}
+     ~\left\{\delta_i(s_i)t_i^2 - m_i(s_i)\right\}\\
+   &=& \lambda_1U_i\left(t_i^1\right) + \lambda_2U_i\left(t_i^2\right)
+\end{eqnarray*}
+式中不等号成立，因为任意两个函数之和的最大值不可能超过两个函数的最大值之和，
+即有~$\max\{f+g\}\le\max~f+\max~g$。按凸函数的定义，
+可得均衡收益函数~$U_i(\cdot)$~为凸函数~(注意到函数~$U_i(\cdot)$~定义
+在区间~$\mathcal{T}_i$~上，而区间~$\mathcal{T}_i$~为凸集)。
+因为凸函数均为绝对连续函数，故~$U_i(\cdot)$~在定义域内部几乎处处可导。
+
+\textbf{(2)~~对激励兼容的直接机制~$\mathcal{D}$，
+均衡收益函数~$U_i(\cdot)$~在定义域内部几乎处处可导,
+且在可微点上有~$U'_i(t_i) = \delta_i(t_i)$。}\vspace{5pt}
+
+注意到，对~$\forall t_i\neq s_i\in\mathcal{T}_i$，以下不等式组成立
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  U_i(t_i) &\ge& u_i(t_i,s_i) = \delta_i(s_i)t_i - m_i(s_i) \\
+   &=& \delta_i(s_i)s_i - m_i(s_i) + \delta_i(s_i)t_i - \delta_i(s_i)s_i\\
+   &=& U_i(s_i) + \delta_i(s_i)(t_i - s_i)\\
+  U_i(s_i) &\ge& u_i(s_i,t_i) = \delta_i(t_i)s_i - m_i(t_i) \\
+   &=& \delta_i(t_i)t_i - m_i(t_i) + \delta_i(t_i)s_i - \delta_i(t_i)t_i\\
+   &=& U_i(t_i) + \delta_i(t_i)(s_i - t_i)
+\end{eqnarray*}
+若有~$t_i>s_i$，则由上述不等式组可得
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  \delta_i(s_i) &\le& \frac{U_i(t_i) - U_i(s_i)}{t_i - s_i} \\
+  \delta_i(t_i) &\ge& \frac{U_i(t_i) - U_i(s_i)}{t_i - s_i}
+\end{eqnarray*}
+由~$\delta_i(\cdot)$~的定义式~(\ref{mech:definition:expected:prob})~可知其为连续函数，
+联合极限的保序性可得
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  \delta_i(t_i) = \lim_{s_i\rightarrow t_i^-}\delta_i(s_i)
+              &\le& \lim_{s_i\rightarrow t_i^-}\frac{U_i(t_i) - U_i(s_i)}{t_i - s_i}
+                = U'_i(t_i^-)\\
+  \delta_i(t_i) &\ge& \lim_{s_i\rightarrow t_i^-}\frac{U_i(t_i) - U_i(s_i)}{t_i - s_i}
+                  = U'_i(t_i^-)
+\end{eqnarray*}
+联合上述不等式组可得
+\begin{equation*}
+    U'_i(t_i^-) \le \delta_i(t_i) \le U'_i(t_i^-)
+\end{equation*}
+若有~$t_i<s_i$，则类似的分析可得
+\begin{equation*}
+    U'_i(t_i^+) \le \delta_i(t_i) \le U'_i(t_i^+)
+\end{equation*}
+在函数的可微点上，其左导数跟右导数相等，
+故均衡收益函数~$U_i(\cdot)$~的可微点上有~$U'_i(t_i) = \delta_i(t_i)$。
+对于几乎处处可导，前面已经由其绝对连续性说明。
+于是均衡收益函数~$U_i(\cdot)$~可以表示为下述积分形式
+\begin{equation}\label{mech:rep:epf}
+    U_i(t_i) = U_i(\underline{\theta}_i) + \int_{\underline{\theta}_i}^{t_i}~\delta_i(x)\id x
+\end{equation}
+
+\textbf{(3)~~对直接机制~$\mathcal{D}$，
+激励兼容性等价于概率函数~$\delta_i(\cdot)$~单调不减，$\forall i\in\,\mathcal{N}$。}\vspace{5pt}
+
+首先，在前一段分析中已经得到，若机制~$\mathcal{D}$~激励兼容，则当~$t_i>s_i$~时，成立
+\begin{equation*}
+    \delta_i(s_i) \le \frac{U_i(t_i) - U_i(s_i)}{t_i - s_i} \le \delta_i(t_i)
+\end{equation*}
+即由机制的激励兼容性可以得到概率函数~$\delta_i(\cdot)$~单调不减。
+反之，若概率函数~$\delta_i(\cdot)$~单调不减。
+则对~$\forall t_i\neq s_i\in\mathcal{T}_i$，
+由均衡收益函数~$U_i(\cdot)$~的积分表示~(\ref{mech:rep:epf})~可得
+
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  U_i(t_i) - U_i(s_i) &=& \int_{s_i}^{t_i}~\delta_i(x)\id x
+   \ge \delta_i(s_i)(t_i - s_i)\\
+   &\Downarrow&\\
+  U_i(t_i) &\ge& U_i(s_i) + \delta_i(s_i)(t_i - s_i)\\
+     &=& \delta_i(s_i)s_i - m_i(s_i) + \delta_i(s_i)(t_i - s_i)\\
+     &=& \delta_i(s_i)t_i - m_i(s_i)\\
+     &=& u_i(t_i,s_i)
+\end{eqnarray*}
+概率函数~$\delta_i(\cdot)$~的单调不减性保证式中不等号成立。
+因为利用积分中值定理，可得
+\begin{equation*}
+    \int_{s_i}^{t_i}~\delta_i(x)\id x = \left\{
+        \begin{array}{ll}
+          \delta_i(\xi)(t_i - s_i), & s_i\le\xi\le t_i,~\mathrm{if}~t_i > s_i \\
+          \delta_i(\xi)(t_i - s_i), & t_i\le\xi\le s_i,~\mathrm{if}~t_i < s_i
+        \end{array}
+    \right.
+\end{equation*}
+对~$t_i > s_i$~的情况，由函数~$\delta_i(\cdot)$~单调不减，
+可得~$\delta_i(\xi)\ge\delta_i(s_i)$，从而不等号成立，即
+\begin{equation*}
+    \int_{s_i}^{t_i}~\delta_i(x)\id x = \delta_i(\xi)(t_i - s_i)
+                                     \ge \delta_i(s_i)(t_i - s_i)
+\end{equation*}
+对~$t_i < s_i$~的情况，由函数~$\delta_i(\cdot)$~单调不减，
+可得~$\delta_i(\xi)\le\delta_i(s_i)$，因为~$t_i - s_i$~为负，
+故
+\begin{equation*}
+    \delta_i(\xi)(t_i - s_i)\ge\delta_i(s_i)(t_i - s_i)
+\end{equation*}
+即前述不等式依然成立。\vspace{5pt}
+
+\textbf{(4)~~收益等价定理~(Revenue Equivalence
+Theorem，RET)。}\vspace{5pt}
+
+联合式~(\ref{mech:definition:expected:prob})~和~(\ref{mech:rep:epf})~可得
+\begin{eqnarray}
+\nonumber
+  U_i(t_i) &=& U_i(\underline{\theta}_i) + \int_{\underline{\theta}_i}^{t_i}~\delta_i(x)\id x \\
+\nonumber
+   &=& U_i(\underline{\theta}_i) + \int_{\underline{\theta}_i}^{t_i}~
+       \int_{\mv{\mathcal{T}}_{-i}}\pi_i(x,\mv{t}_{-i})f_{-i}(\mv{t}_{-i})~\id\mv{t}_{-i} \id x\\
+   &=& U_i(\underline{\theta}_i) + \int_{\mv{\mathcal{T}}_{-i}}~
+       \left(\int_{\underline{\theta}_i}^{t_i}\pi_i(x,\mv{t}_{-i})~\id x\right)~f_{-i}(\mv{t}_{-i})~\id\mv{t}_{-i}
+\label{mech:ret:epf}
+\end{eqnarray}
+注意到式中的积分项只依赖于机制的分配规则和投标人的类型分布。因此，
+若两个激励兼容的直接机制采用相同的分配规则，
+则投标人~$i$~在这两个机制下的均衡收益在相差常数的意义下等价，
+且该常数为投标人~$i$~在类型为~$\underline{\theta}_i$~时的均衡收益~$U_i(\underline{\theta}_i)$。
+如果上述最低均衡收益相等，则投标人~$i$~在这两种机制下的均衡收益相等。
+利用均衡收益和期望价格间的关系~(\ref{mech:definition:ic:inequality})~可得
+均衡时投标人~$i$~的期望价格为
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  m_i(t_i) &=& \delta_i(t_i)t_i - U_i(t_i) \\
+   &=& -U_i(\underline{\theta}_i) + \delta_i(t_i)t_i - \int_{\underline{\theta}_i}^{t_i}~\delta_i(x)\id x \\
+   &=& m_i(\underline{\theta}_i) + \delta_i(t_i)t_i - \delta_i(\underline{\theta}_i)\underline{\theta}_i
+    - \int_{\underline{\theta}_i}^{t_i}~\delta_i(x)\id x
+\end{eqnarray*}
+注意到对最低估价~$\underline{\theta}_i$，均衡收益为
+\begin{equation*}
+    U_i(\underline{\theta}_i) = \delta_i(\underline{\theta}_i)\underline{\theta}_i - m_i(\underline{\theta}_i)
+\end{equation*}
+故也可以说若两个激励兼容的直接机制采用相同的分配规则，
+则投标人~$i$~在这两个机制下的期望价格在相差常数的意义下等价，
+且该常数为投标人~$i$~在类型为~$\underline{\theta}_i$~时的期望价格~$m_i(\underline{\theta}_i)$，
+若上述最低期望价格相同，则~$i$~在两种机制下的期望价格相等。
+
+对卖者而言，其期望收益则可表示为
+\begin{eqnarray*}
+  U_0 &=& \int_{\mv{\mathcal{T}}}\left[t_0\left(1-\sum_{i\in\,\mathcal{N}}\pi_i(\mv{t})\right)
+       +  \sum_{i\in\,\mathcal{N}}\mu_i(\mv{t})\right]f(\mv{t})\id\mv{t} \\
+      &=& t_0-t_0\sum_{i\in\,\mathcal{N}}\int_{\mathcal{T}_i}~\delta_i(t_i)f_i(t_i)\id t_i
+       +  \sum_{i\in\,\mathcal{N}}\int_{\mathcal{T}_i}~m_i(t_i)f_i(t_i)\id t_i\\
+      &=& t_0+\sum_{i\in\,\mathcal{N}}\int_{\mathcal{T}_i}~\left(-t_0\delta_i(t_i)
+          -U_i(\underline{\theta}_i) + \delta_i(t_i)t_i -
+          \int_{\underline{\theta}_i}^{t_i}~\delta_i(x)\id x\right)f_i(t_i)\id t_i\\
+      &=& t_0 + \sum_{i\in\,\mathcal{N}}\int_{\mathcal{T}_i}~
+          \left(\delta_i(t_i)(t_i-t_0) - \int_{\underline{\theta}_i}^{t_i}~\delta_i(x)\id x\right)f_i(t_i)\id t_i
+       - \sum_{i\in\,\mathcal{N}}U_i(\underline{\theta}_i)
+\end{eqnarray*}
+注意到上式中只有最后的求和项依赖于机制的定价规则。因此，
+若两个激励兼容的直接机制采用相同的分配规则，
+则卖者在这两个机制下的期望收益在相差常数的意义下等价，
+且该常数为各投标人在类型为~$\underline{\theta}_i$~时的
+期望价格之和~$\sum_{i\in\,\mathcal{N}}U_i(\underline{\theta}_i)$。
+
+
+
+\subsection{个体理性}
+
+卖者不可能强迫投标人来买其提供的``标的物''，故当购得``标的物''时，
+投标人要能够获得正的收益，即要求直接机制~$\mathcal{D}=(\mv{\pi},\mv{\mu})$~是
+个体理性的~(Individual Rational，IR)，亦即满足下述条件
+\begin{equation}\label{mech:IR:definition}
+    U_i(t_i) \ge 0,~~~~\forall i\in\,\mathcal{N},~~t_i\in\mathcal{T}_i
+\end{equation}
+注意到当机制~$\mathcal{D}$~激励兼容时，由式~(\ref{mech:rep:epf})~和~$\delta_i(\cdot)$~的
+非负性可得~IR~条件等价于
+\begin{equation*}
+    U_i(\underline{\theta}_i) \ge 0,~~~~\forall i\in\,\mathcal{N}
+\end{equation*}
+
+
+
+\section{最优机制}
+
+称同时满足~IC~和~IR~两个条件，
+且能最大化卖者收益的直接机制~$\mathcal{D}^\star=(\mv{\pi}^\star,\mv{\mu}^\star)$~为最优机制~(OPT)。
+以下讨论一般意义下最优机制的求解问题，分析中假定~$f_i(t)>0$，$\forall
+t\in\mathcal{T}_i$，且各投标人的类型~(估价)~分布独立，即有
+\begin{equation}
+    f(\mv{t}) = \prod_{i\in\,\mathcal{N}}f_i(t_i)
+\end{equation}
+
+\subsection{最优机制求解}
+
+利用分步积分法，可得
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  \int_{\mathcal{T}_i}\int_{\underline{\theta}_i}^{t_i}~\delta_i(x)\id x f_i(t_i)\id t_i &=&
+  \int_{\mathcal{T}_i}\int_{\underline{\theta}_i}^{t_i}~\delta_i(x)\id x \id F_i(t_i) \\
+   &=& \left.F_i(t_i)\int_{\underline{\theta}_i}^{t_i}~\delta_i(x)\id x
+       \right|_{\underline{\theta}_i}^{\overline{\theta}_i}
+    -  \int_{\mathcal{T}_i}F_i(t_i)\delta_i(t_i)\id t_i\\
+   &=& \int_{\mathcal{T}_i}\delta_i(t_i)\id t_i - \int_{\mathcal{T}_i}F_i(t_i)\delta_i(t_i)\id t_i \\
+   &=& \int_{\mathcal{T}_i}\left(1 - F_i(t_i)\right)\delta_i(t_i)\id t_i
+\end{eqnarray*}
+故卖者的期望收益可表示为
+\begin{eqnarray}
+\nonumber
+  U_0 &=& \sum_{i\in\,\mathcal{N}}\int_{\mathcal{T}_i}~
+          \left(t_i -\frac{1 - F_i(t_i)}{f_i(t_i)} - t_0\right)\delta_i(t_i)f_i(t_i)\id t_i
+          + t_0 - \sum_{i\in\,\mathcal{N}}U_i(\underline{\theta}_i) \\
+\nonumber
+      &=& \sum_{i\in\,\mathcal{N}}\int_{\mathcal{T}_i}~
+          \left(t_i -\frac{1 - F_i(t_i)}{f_i(t_i)} - t_0\right)\int_{\mv{\mathcal{T}}_{-i}}
+          \pi_i(t_i,\mv{t}_{-i})f_{-i}(\mv{t}_{-i})~\id\mv{t}_{-i}f_i(t_i)\id t_i
+          + t_0 - \sum_{i\in\,\mathcal{N}}U_i(\underline{\theta}_i)\\
+      &=& \int_{\mv{\mathcal{T}}}\left[\sum_{i\in\,\mathcal{N}}~
+          \left(t_i -\frac{1 - F_i(t_i)}{f_i(t_i)} - t_0\right)\pi_i(\mv{t})\right]f(\mv{t})~\id\mv{t}
+          + t_0 - \sum_{i\in\,\mathcal{N}}U_i(\underline{\theta}_i)
+\label{mech:revenue:seller}
+\end{eqnarray}
+为最大化上式，应当使得积分项最大化，同时使最后的求和项最小化。
+注意到积分项中的决策变量只包括分配规则，故最优机制~$\mathcal{D}^\star$~的
+分配规则~$\mv{\pi}^\star$~满足条件
+\begin{equation}\label{mech:optimal:allocation}
+\begin{array}{rl}
+ \mv{\pi}^\star = \mathop{\arg\max}\limits_{\mv{\pi}} & \int_{\mv{\mathcal{T}}}\left[\sum\limits_{i\in\,\mathcal{N}}~
+                       \left(t_i -\frac{1 - F_i(t_i)}{f_i(t_i)} - t_0\right)\pi_i(\mv{t})\right]f(\mv{t})~\id\mv{t} \\
+                       \mathrm{s.t.} & \sum\limits_{i\in\,\mathcal{N}}\pi_i(\mv{t})\le 1 \\
+                        & \pi_i(\mv{t})\ge 0,~~\forall i\in\,\mathcal{N}
+                     \end{array}
+\end{equation}
+得到最优分配规则后，再选择定价规则使得求和项最小。注意到满足~IC~和~IR~条件的机制，
+其~$U_i(\underline{\theta}_i) \ge 0$，故应当选择定价规则，使得
+\begin{equation*}
+    U_i(\underline{\theta}_i) = 0,~~~~\forall i\in\,\mathcal{N}
+\end{equation*}
+由式~(\ref{mech:ret:epf})~可得
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  U_i(\underline{\theta}_i) &=& U_i(t_i) - \int_{\mv{\mathcal{T}}_{-i}}~
+       \left(\int_{\underline{\theta}_i}^{t_i}\pi_i(x,\mv{t}_{-i})~\id x\right)~f_{-i}(\mv{t}_{-i})~\id\mv{t}_{-i}\\
+   &=& \delta_i(t_i)t_i - m_i(t_i) - \int_{\mv{\mathcal{T}}_{-i}}~
+       \left(\int_{\underline{\theta}_i}^{t_i}\pi_i(x,\mv{t}_{-i})~\id x\right)~f_{-i}(\mv{t}_{-i})~\id\mv{t}_{-i}\\
+   &=& \int_{\mv{\mathcal{T}}_{-i}}t_i\pi_i(t_i,\mv{t}_{-i})f_{-i}(\mv{t}_{-i})~\id\mv{t}_{-i}
+        - m_i(t_i) - \int_{\mv{\mathcal{T}}_{-i}}~
+       \left(\int_{\underline{\theta}_i}^{t_i}\pi_i(x,\mv{t}_{-i})~\id x\right)~f_{-i}(\mv{t}_{-i})~\id\mv{t}_{-i}\\
+\end{eqnarray*}
+令~$U_i(\underline{\theta}_i) = 0$~可得到
+\begin{equation*}
+    m_i(t_i) = \int_{\mv{\mathcal{T}}_{-i}}\left[t_i\pi_i(\mv{t})
+      - \int_{\underline{\theta}_i}^{t_i}\pi_i(x,\mv{t}_{-i})~\id x\right] f_{-i}(\mv{t}_{-i})~\id\mv{t}_{-i}
+\end{equation*}
+再由~$m_i(t_i)$~的定义式~(\ref{mech:definition:expected:payment})~可得最优机制中的定价规则为
+\begin{equation}\label{mech:optimal:payment}
+    \mu_i^\star(\mv{t}) = t_i\pi_i(\mv{t}) - \int_{\underline{\theta}_i}^{t_i}\pi_i(x,\mv{t}_{-i})~\id x,
+    ~~~~\forall i\in\,\mathcal{N}
+\end{equation}
+
+
+\subsection{正规最优机制}
+
+定义投标人~$i$~的实质估价~(virtual valuation)~为
+\begin{equation}\label{mech:definition:virtual:valuation}
+    \psi_i(t_i) = t_i - \frac{1 - F_i(t_i)}{f_i(t_i)} = t_i - \frac{1}{\lambda_i(t_i)}
+\end{equation}
+式中，$\lambda_i(\cdot)$~为失效率~(Hazard Rate)。称最优机制设计问题为\textbf{正规的~(Regular)}，
+若全体投标人的实质估价函数均单调不减。\vspace{5pt}
+
+\noindent\textbf{正规条件下的最优机制
+\begin{enumerate}[(1)]
+  \item 若~$\forall i\in\,\mathcal{N},~\psi_i(t_i) < t_0$，则卖者保留``标的物''；
+  \item 若~$\exists i\in\,\mathcal{N}$，使得~$\psi_i(t_i) \ge t_0$，
+        则将``标的物''分配给实质估价最高的投标人，若有多个投标人的实质估价相同，则以相同的概率
+        随机分配``标的物''；
+  \item 定价规则按式~(\ref{mech:optimal:payment})~计算。\vspace{5pt}
+\end{enumerate}
+}
+
+首先，上面给出的机制最大化卖者的收益，并满足~IR~条件，以下说明其满足~IC~条件。
+注意到~IC~条件等价于~$\delta_i(\cdot)$~单调不减。$\forall s_i < t_i$，当实质估价单调不减时，
+$\psi_i(s_i) < \psi_i(t_i)$，故~$\pi_i(s_i,\mv{t}_{-i}) < \pi_i(t_i,\mv{t}_{-i})$，
+由~$\delta_i(\cdot)$~的定义式知~$\delta_i(s_i)<\delta_i(t_i)$，故有~$\delta_i(\cdot)$~单调不减。
+
+为方便求解价格，定义
+\begin{equation}\label{mech:payment:intuitive}
+    z_i(\mv{t}_{-i}) \triangleq \inf\left\{x\left|\psi_i(x) \ge t_0,~\psi_i(x)
+                     \ge \psi_j(t_j),~\forall j\neq i\right.\right\}
+\end{equation}
+即~$z_i(\mv{t}_{-i})$~是当对手类型为~$\mv{t}_{-i}$~时，投标人~$i$~能赢得``标的物''的最低报价。
+利用~$z_i(\mv{t}_{-i})$~可得分配规则的取值为
+\begin{equation*}
+    \pi_i(x,\mv{t}_{-i}) = \left\{
+        \begin{array}{cl}
+          1, & x > z_i(\mv{t}_{-i}) \\
+          0, & x < z_i(\mv{t}_{-i})
+        \end{array}
+    \right.
+\end{equation*}
+同时可得到
+\begin{equation*}
+    \int_{\underline{\theta}_i}^{t_i}\pi_i(x,\mv{t}_{-i})~\id x = \left\{
+        \begin{array}{cl}
+          \int_{z_i(\textbf{\emph{t}}_{-i})}^{t_i}~1~\id x
+             = t_i-z_i(\mv{t}_{-i}), & t_i > z_i(\mv{t}_{-i}) \\
+          0, & t_i < z_i(\textbf{\emph{t}}_{-i})
+        \end{array}
+    \right.
+\end{equation*}
+从而得到最优的定价规则
+\begin{equation}\label{mech:definition:optimal:payment}
+    \mu_i^\star(\mv{t}) = t_i\pi_i(\mv{t}) - \int_{\underline{\theta}_i}^{t_i}\pi_i(x,\mv{t}_{-i})~\id x
+                        = \left\{
+        \begin{array}{cl}
+          z_i(\mv{t}_{-i}), & \pi_i(\mv{t}) = 1 \\
+          0, & \pi_i(\mv{t}) = 0
+        \end{array}
+    \right.
+\end{equation}
+于是正规条件下的最优机制可描述为
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  \pi_i^\star(\mv{t}) &=& \left\{
+        \begin{array}{cl}
+          1, & \psi_i(t_i) \ge t_0,~\psi_i(t_i) > \psi_j(t_j),~\forall j\neq i \\
+          0, & \mathrm{otherwise}
+        \end{array}
+  \right. \\
+  \mu_i^\star(\mv{t}) &=& \left\{
+        \begin{array}{cl}
+          z_i(\mv{t}_{-i}), & \pi_i(\mv{t}) = 1 \\
+          0, & \pi_i(\mv{t}) = 0
+        \end{array}
+  \right.
+\end{eqnarray*}
+
+在对称情况下，各投标人具有相同的分布和实质估价函数，记为~$\psi(\cdot)$，可得
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  z_i(\mv{t}_{-i}) &=& \inf\left\{x\left|\psi(x) \ge t_0,~\psi(x)
+                     \ge \psi(t_j),~\forall j\neq i\right.\right\} \\
+   &=& \inf\left\{x\left|\psi(x) \ge t_0,~x
+                     \ge t_j,~\forall j\neq i\right.\right\} \\
+   &=& \max\left\{\psi^{-1}(t_0),~\max\limits_{j\neq i} \left\{t_j\right\}\right\}
+\end{eqnarray*}
+即对称情况下的最优机制为附带保留价~(Reserve Price)~$r^\star = \psi^{-1}(t_0)$~的二价机制。
+
+\subsection{经济学含义}
+
+设买者的估价分布为~$F(t)$，若卖者给出价格~$p$，则买者购买的概率为~$1-F(p)$，
+即估价高于~$p$~的概率。若将这一概率视为买者的需求函数~(Demand Function)，则有
+\begin{equation*}
+    q(p)=1-F(p)
+\end{equation*}
+反之有逆需求函数~(Inverse Demand Fucntion)
+\begin{equation*}
+    p=F^{-1}(1-q)
+\end{equation*}
+则卖者的期望收益为
+\begin{equation*}
+    R(q)=pq=F^{-1}(1-q)q
+\end{equation*}
+对上式微分，得到边际收益
+\begin{eqnarray*}
+% \nonumber to remove numbering (before each equation)
+  MR &=& \frac{\id R}{\id q} = F^{-1}(1-q) - \frac{q}{f(p)|_{p=F^{-1}(1-q)}}
+  \\
+     &=& p - \frac{1 - F(p)}{f(p)}
+\end{eqnarray*}
+即实质估价为价格为~$p$~时卖者的边际收益，
+而最优机制则按照各投标人为卖者提供的边际收益大小分配``标的物''，
+价格则确定为该投标人能获得``标的物''的最低报价。
+
+对于得到``标的物''的投标人，由实质估价~$\psi_i(\cdot)$~和~$z_i(\mv{t}_{-i})$~的定义可知，
+其支付的价格不超过自己的估价，故其能获得的交易剩余~(Surplus)~为~$t_i-z_i(\mv{t}_{-i})$。
+对卖者而言，投标人的期望交易剩余
+\begin{equation*}
+    E\left[T_i-z_i(\mv{T}_{-i})\right]
+\end{equation*}
+则是其要付出的信息租金~(Information Rent)。因为只有投标人~$i$~知道其真实估价，
+故要让其报出真实估价，必须要为其提供一定的剩余，否则~$i$~将没有激励参与竞购。
+这也说明在不完全信息下，卖者不可能通过最优机制榨取全部的交易剩余。
+
+
+\section{效率机制}
+
+直观上说，机制的效率关心的是物品是否分配到最能实现其价值的参与者手中，
+即是否将物品分配给对其估计最高的投标人。
+
+
+\subsection{机制的效率}
+
+称分配规则~$\mv{\pi}^e:\mathcal{T}\rightarrow\mv{\Delta}$~是有效率的
+~(简称为效率分配规则，Efficient，E)，
+若其最大化社会福利~(Social Welfare)，形式上即对~$\forall\mv{t}
+\in\mathcal{T}$均有
+\begin{equation}
+    \mv{\pi}^e(\mv{t})\in\mathop{\arg\max}\limits_{\mv{\pi}} 
+         \sum_{i\in\mathcal{N}}\pi_it_i
+\end{equation}
+同时，称采用效率分配规则的机制为效率机制。给定效率分配规则~$\mv{\pi}^e$，定义
+\begin{eqnarray}
+    W(\mv{t}) &\triangleq& \sum_{i\in\mathcal{N}} \pi^e_i(\mv{t})t_i \\
+    W_{-i}(\mv{t}) &\triangleq& \sum_{j\neq i} \pi^e_j(\mv{t})t_j
+\end{eqnarray}
+分别表示参与人类型为~$\mv{t}$~时的总社会福利和除参与人~$i$~外其他参与人的总福利。
+
+\subsection{VCG~机制} 
+
+由效率的定义可知机制的效率从本质上说取决于
+其采用的分配规则，但效率分配规则通常并不唯一，同时并非所有的效率分配规则都能实现，
+VCG (Vickrey-Clarke-Groves)~机制~$(\mv{\pi}^e, \mv{\mu}^{\mathrm{V}})$~给出了
+效率分配规则的一种说实话实现，其定价规则取为某参与人的有效出现带给其他人的总福利损失~(外部性)，
+即对~$\forall i\in\mathcal{N}$~有
+\begin{equation}
+    \mu^{\mathrm{V}}_i \triangleq W(\underline{\theta}_i, \mv{t}_{-i}) - W_{-i}(\mv{t})
+\end{equation}
+注意到，在单物品拍卖的情景下，上述的~VCG~机制就是经典的二价~(SP)~机制。
+
+\textbf{VCG~机制的激励兼容性}~ ~
+考虑参与人~$i$，假设其余参与人均采用实话实说策略，则参与人~$i$~报价~$s_i$~的收益为
+\begin{eqnarray*}
+    \pi^e_i(s_i,\mv{t}_{-i})t_i - \mu_i^{\mathrm{V}}(s_i,\mv{t}_{-i}) 
+         &=& \pi^e_i(s_i,\mv{t}_{-i})t_i + W_{-i}(s_i,\mv{t}_{-i}) - W(\underline{\theta}_i,\mv{t}_{-i}) \\
+	 &=& \sum_{i\in\mathcal{N}} \pi^e_j(s_i,\mv{t}_{-i})t_j - W(\underline{\theta}_i,\mv{t}_{-i}) \\
+	 &\le& W(\mv{t}) - W(\underline{\theta}_i,\mv{t}_{-i})
+\end{eqnarray*}
+注意到社会福利的定义，最后的不等号成立，由此可知~VCG~机制是激励兼容的。
+
+\textbf{VCG~机制的个体理性}~ ~
+由~VCG~机制的激励兼容性，根据上面的期望收益表达式，可得参与人~$i$~的均衡收益函数为
+\begin{eqnarray}
+    \nonumber
+    U_i^\mathrm{V}(t_i) &=& \mathbb{E}[W(t_i,\mv{t}_{-i}) - W(\underline{\theta}_i,\mv{t}_{-i})] \\
+                        &=& \mathbb{E}[W(t_i,\mv{t}_{-i})] - c_i^\mathrm{V} \label{VCG_payoff_equ}
+\end{eqnarray}
+且其为单调递增的凸函数，同时注意到~$U_i^\mathrm{V}(\underline{\theta}_i)=0$，
+从而有~$U_i^\mathrm{V}(t_i)\ge0$，故~VCG~机制也是个体理性~IR~的。
+
+\textbf{VCG~机制的收益特性}~ ~
+在单物品拍卖的场景下，VCG~机制是所有满足~IC~和~IR~条件的效率机制中，
+使得拍卖人的期望收益最大~(也即让参与人的期望花费最高)~的机制。
+
+注意到，IC~条件使得收益等价原理可应用于这些机制，对任一个这样的机制，
+参与人~$i$~的均衡收益函数~$U_i$~跟~$U_i^\mathrm{V}$~只差一个常数，记为~$U_i - U_i^\mathrm{V} = c_i$。
+于是有~$U_i(\underline{\theta}_i) = c_i + U_i^\mathrm{V}(\underline{\theta}_i) = c_i$，
+进一步由~IR~条件可知~$c_i\ge0$，从而参与人~$i$~的均衡收益将不低于在~VCG~机制下，
+故在此设定下~VCG~机制最大化拍卖人的期望收益。
+
+\textbf{VCG~机制的唯一性~(GLH~定理)}~ ~
+
+
+
+
+
+\section{预算平衡} 
+
+称机制~$\mathcal{D} = \{\mv{\pi}, \mv{\mu}\}$~能够平衡预算，若其对~$\forall \mv{t}\in\mv{\mathcal{T}}$~均有
+\begin{equation}
+    \sum_{i\in\mathcal{N}} \mu_i(\mv{t}) = 0
+\end{equation}
+
+\subsection{AGV~机制}
+
+Arrow-d'Aspremont-G\'{e}rard-Varet (AGV)~机制~$(\pi^e, \mu^\mathrm{A})$~保证预算的平衡，
+其分配规则采用效率分配规则，定价规则如下
+\begin{equation}
+    \mu_i^\mathrm{A}(\mv{t}) = \frac{1}{N-1} \sum_{j\neq i} \mathbb{E}_{\mv{t}_{-j}}[W_{-j}(t_j,\mv{t}_{-j})]
+                             - \mathbb{E}_{\mv{t}_{-i}}[W_{-i}(t_i,\mv{t}_{-i})]
+\end{equation}
+注意到，在上述定价规则下，
+\begin{eqnarray*}
+    \sum_{i\in\mathcal{N}} \mu_i^\mathrm{A}(\mv{t}) &=& \frac{1}{N-1} \sum_{i\in\mathcal{N}}\sum_{j\neq i} \mathbb{E}_{\mv{t}_{-j}}[W_{-j}(t_j,\mv{t}_{-j})]
+                             - \sum_{i\in\mathcal{N}} \mathbb{E}_{\mv{t}_{-i}}[W_{-i}(t_i,\mv{t}_{-i})] \\
+			     &=& \frac{\mathrm{sum}}{N-1} \left(\left[
+				 \begin{array}{cccc}
+				     0 & \mathbb{E}[W_{-2}(t_2,\mv{t}_{-2})] & \cdots & \mathbb{E}[W_{-N}(t_N,\mv{t}_{-N})] \\
+				     \mathbb{E}[W_{-1}(t_1,\mv{t}_{-1})] & 0 & \cdots & \mathbb{E}[W_{-N}(t_N,\mv{t}_{-N})] \\
+				     \vdots & \vdots & \ddots & \vdots \\
+				     \mathbb{E}[W_{-1}(t_1,\mv{t}_{-1})] & \mathbb{E}[W_{-2}(t_2,\mv{t}_{-2})] & \cdots & 0 
+				 \end{array}
+			         \right]\right) \\
+			     & & - \sum_{i\in\mathcal{N}} \mathbb{E}_{\mv{t}_{-i}}[W_{-i}(t_i,\mv{t}_{-i})] \\
+			     &=& 0
+\end{eqnarray*}
+式中，sum$(\cdot)$~为矩阵元素求和函数，由上述运算可知~AGV~机制是预算平衡的。
+注意到，VCG~机制下的价格等于参与人给其他人造成的福利损失，而在~AGV~机制下，
+价格的确定更加复杂，直观上价格等于其他人的平均期望福利与自己的期望福利之差。
+
+\textbf{AGV~机制的激励兼容性}~ ~
+考虑参与人~$i$，假设其余参与人均采用实话是说策略，则参与人~$i$~报价~$s_i$~的期望收益为
+\begin{equation*}   
+    \mathbb{E}_{\mv{t}_{-i}}[\pi^e_i(s_i,\mv{t}_{-i})t_i + W_{-i}(t_i,\mv{t}_{-i})]]
+    - \mathbb{E}_{\mv{t}_{-i}}[\frac{1}{N-1} \sum_{j\neq i} \mathbb{E}_{\mv{t}_{-j}}[W_{-j}(t_j,\mv{t}_{-j})]]
+\end{equation*}   
+注意到上式中，第一个期望项在~$s_i = t_i$~时达到最大，第二项为常数，记为~$c_i^\mathrm{A}$，
+故说实话也是参与人~$i$~的最佳策略。
+可知~AGV~机制是激励兼容的，但一般不能保证其同时也是~IR~的。
+同时可得到~AGV~机制下，参与人~$i$~的均衡收益函数为
+\begin{equation}
+    \label{AGV_payoff_equ}
+    U_i^\mathrm{A}(t_i) = \mathbb{E}_{\mv{t}_{-i}}[W(t_i,\mv{t}_{-i})] - c_i^\mathrm{A}
+\end{equation}   
+
+
+
+\subsection{E + IC  + IR + BB}
+
+一般不能保证~VCG~机制的预算平衡性和~AGV~机制的~IR~特性，但是可以联合~VCG~和~AGV~机制，
+得到能同时满足效率、激励兼容、个体理性和预算平衡四个特性的机制。其前提是~VCG~机制有正的期望盈余。
+
+这一要求是必要的。因为在所有满足~IC~和~IR~条件的效率机制中，VCG~机制的期望收益最高，
+故若~VCG~不能平衡预算，则其他满足这三个条件的机制均不能平衡预算。充分性则可以通过构造出具体的机制来证明，
+设~VCG~机制有期望的盈余，而~AGV~机制是预算平衡的，故有
+\begin{equation*}
+    \mathbb{E}\left[\sum_{i\in\mathcal{N}}\mu_i^\mathrm{V}(\mv{t})\right] \ge
+    \mathbb{E}\left[\sum_{i\in\mathcal{N}}\mu_i^\mathrm{A}(\mv{t})\right] = 0
+\end{equation*}   
+注意到两种机制均采用效率分配规则，而上述不等式说明在期望支付上~VCG~机制又大于~AGV~机制，
+故在均衡收益函数上，VCG~机制必须小于~AGV~机制。联合式~(\ref{VCG_payoff_equ})~和~(\ref{AGV_payoff_equ})~可得
+\begin{equation*}
+    \sum_i c_i^\mathrm{V} \ge \sum_i c_i^\mathrm{A}, ~ ~ \Rightarrow \sum_i \left(c_i^\mathrm{V} - c_i^\mathrm{A} \right) \ge 0,
+    ~ ~ \Rightarrow \sum_{i>2} \left(c_i^\mathrm{V} - c_i^\mathrm{A} \right) \ge c_1^\mathrm{A} - c_1^\mathrm{V}
+\end{equation*} 
+据此构造机制~$\mathcal{D}^4=(\pi^e,\mu^\mathrm{B})$，其采用效率分配规则，定价规则为
+\begin{equation}
+    \mu_i^\mathrm{B}(\mv{t}) = \mu_i^\mathrm{A}(\mv{t}) + d_i
+\end{equation}
+式中，$d_i = c_i^\mathrm{A} - c_i^\mathrm{V}$，$\forall i>1$, 
+$d_1 = -\sum_{i=2}^N d_i = \sum_{i>2} \left(c_i^\mathrm{V} - c_i^\mathrm{A} \right) \ge c_1^\mathrm{A} - c_1^\mathrm{V}$。
+
+首先，机制~$\mathcal{D}^4$~显然是效率机制，因为其采用效率分配规则；
+其次，$\mathcal{D}^4$~平衡预算，这由~$d_i$~的定义和~AGV~机制平衡预算可得；
+第三，$\mathcal{D}^4$~的定价规则跟~AGV~只差常数，故其必然也是激励兼容的;
+最后，$\mathcal{D}^4$~下的均衡收益函数也跟~AGV~机制下的均衡收益函数只差常数，
+即对~$\forall i>1$~则有
+\begin{equation*}
+    U_i^\mathrm{B}(t_i) = U_i^\mathrm{A} + d_i = U_i^\mathrm{A} + c_i^\mathrm{A} - c_i^\mathrm{V} = U_i^\mathrm{V}(t_i)
+\end{equation*}   
+即是~VCG~机制的均衡收益函数。而对~$i=1$~则有
+\begin{equation*}
+    U_1^\mathrm{B}(t_1) = U_1^\mathrm{A} + d_1 \ge U_1^\mathrm{A} + c_1^\mathrm{A} - c_1^\mathrm{V} = U_1^\mathrm{V}(t_1)
+\end{equation*}   
+综上，可得机制~$\mathcal{D}^4$~也是个体理性~IR~的。
+
+
+
+
+
+
+\section{总结} 
+
+由前面讨论可知，除~VCG~机制外，其余机制均依赖与具体的应用环境，
+特别是最优机制和~AGV~机制依赖于参与人的类型分布。下表总结了上述
+各种机制的特性，由表可知机制一般只能具有~5~个特性中的~3~个。
+注意到，能同时具有~E + IC + IR + BB~4~个特性的机制并不普遍存在，
+其依赖于~VCG~机制在特定应用场景下是否存在期望盈余，
+同时其设计实际上联合了~VCG~和~AGV~两种机制。另外，在所有满足~E + IC + IR~的机制中，
+VCG~机制最大化拍卖人的期望收益，但这一最大期望收益不高于~OPT~机制下的期望收益，
+因为~OPT~机制一般不是效率机制。
+
+从设计实现上说，VCG~机制不依赖于参与人分布，只需按照实现的报价，根据最大化社会福利
+的原则分配物品，并按指定的规则计算价格。对于~AGV~机制，给定参与人分布就能
+按照既定的方法得到相应的机制。OPT~机制和同时具有四种特性的机制则不同，还需要参与人的分布
+满足一定的条件，比如~OPT~机制要求的正规条件，同时具有四种特性的机制则要求~VCG~存在期望盈余。
+注意，实际上在非正规条件下同样可以设计出~OPT~机制，因此也可以说给定参与人分布就能设计出~OPT~机制，
+另外在一般的应用环境中，正规条件一般都是满足的。
+
+\begin{table}[!h]
+    \caption{各种机制及其特性}
+    \vspace{.2cm}
+    \centering 
+    \begin{tabular}{c|ccccc}
+	\hline
+	    & E & IC & IR & BB & RM \\
+	\hline
+	OPT &            & \checkmark  & \checkmark  &              & \checkmark  \\
+	VCG & \checkmark & \checkmark  & \checkmark  &              &    \\
+	AGV & \checkmark & \checkmark  &             &  \checkmark  &    \\
+	\hline
+    \end{tabular}
+\end{table}
+
+
+
+\end{document}
